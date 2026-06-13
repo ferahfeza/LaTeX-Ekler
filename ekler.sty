@@ -1,0 +1,119 @@
+% 
+% (c) Ali İhsan Çanakoğlu (LaTeX3 Refactoring by Antigravity)
+%
+%% This program can be redistributed and/or modified under the terms
+%% of the LaTeX Project Public License Distributed from CTAN archives
+%% in directory macros/latex/base/lppl.txt.
+% 
+\NeedsTeXFormat{LaTeX2e}[2019/03/12]
+\ProvidesPackage{ekler}[2026/06/13 v2.00 ekler - LaTeX3 rewrite]
+
+\RequirePackage{expl3}
+\RequirePackage{xparse}
+\RequirePackage{refcount}
+\RequirePackage{amsmath}
+
+% Türkçe babel paketinin sorunsuz çalışması için varsayılan ayarlar
+\PassOptionsToPackage{turkish,shorthands=:!}{babel}
+\RequirePackage{babel}
+\ExplSyntaxOn
+
+\cs_generate_variant:Nn \str_case:nnF { VnF }
+\cs_generate_variant:Nn \str_item:nn { Vn }
+\cs_generate_variant:Nn \str_range:nnn { Vnn }
+
+% Değişkenleri tanımlıyoruz
+\str_new:N \l__ekler_ref_str
+\str_new:N \l__ekler_last_char_str
+\str_new:N \l__ekler_last_two_str
+\str_new:N \l__ekler_suffix_str
+
+% Sayının son hanelerine bakarak doğru eki bulan asıl fonksiyon
+\cs_new_protected:Nn \__ekler_calculate_suffix:n
+  {
+    % Referansın metin karşılığını string olarak alıyoruz (örn. "2.14")
+    \str_set:Ne \l__ekler_ref_str { \getrefnumber{#1} }
+    
+    % Son bir ve son iki karakteri çıkarıyoruz
+    \str_set:Ne \l__ekler_last_char_str { \str_item:Vn \l__ekler_ref_str { -1 } }
+    \str_set:Ne \l__ekler_last_two_str { \str_range:Vnn \l__ekler_ref_str { -2 } { -1 } }
+    
+    % Varsayılan ek
+    \str_set:Nn \l__ekler_suffix_str { de }
+    
+    % Önce son iki karaktere bakarak onlarca bitenleri ('0'lıları) kontrol edelim
+    \str_case:VnF \l__ekler_last_two_str
+      {
+        { 00 } { \str_set:Nn \l__ekler_suffix_str { de } } % yüz'de, bin'de
+        { 10 } { \str_set:Nn \l__ekler_suffix_str { da } } % on'da
+        { 20 } { \str_set:Nn \l__ekler_suffix_str { de } } % yirmi'de
+        { 30 } { \str_set:Nn \l__ekler_suffix_str { da } } % otuz'da
+        { 40 } { \str_set:Nn \l__ekler_suffix_str { ta } } % kırk'ta
+        { 50 } { \str_set:Nn \l__ekler_suffix_str { de } } % elli'de
+        { 60 } { \str_set:Nn \l__ekler_suffix_str { ta } } % altmış'ta
+        { 70 } { \str_set:Nn \l__ekler_suffix_str { te } } % yetmiş'te
+        { 80 } { \str_set:Nn \l__ekler_suffix_str { de } } % seksen'de
+        { 90 } { \str_set:Nn \l__ekler_suffix_str { da } } % doksan'da
+      }
+      {
+        \str_case:VnF \l__ekler_last_char_str
+          {
+            { 0 } { \str_set:Nn \l__ekler_suffix_str { da } }
+            { 1 } { \str_set:Nn \l__ekler_suffix_str { de } }
+            { 2 } { \str_set:Nn \l__ekler_suffix_str { de } }
+            { 3 } { \str_set:Nn \l__ekler_suffix_str { te } }
+            { 4 } { \str_set:Nn \l__ekler_suffix_str { te } }
+            { 5 } { \str_set:Nn \l__ekler_suffix_str { te } }
+            { 6 } { \str_set:Nn \l__ekler_suffix_str { da } }
+            { 7 } { \str_set:Nn \l__ekler_suffix_str { de } }
+            { 8 } { \str_set:Nn \l__ekler_suffix_str { de } }
+            { 9 } { \str_set:Nn \l__ekler_suffix_str { da } }
+          }
+          { } % Eşleşmezse hiçbir şey yapma (varsayılan 'de' kalır)
+      }
+  }
+
+% EQUATION İÇİN EKLER (\ede, \edeki, \eden)
+\NewDocumentCommand{\ede}{ m }
+  {
+    \__ekler_calculate_suffix:n { #1 }
+    \eqref{#1}'\l__ekler_suffix_str
+  }
+
+\NewDocumentCommand{\edeki}{ m }
+  {
+    \__ekler_calculate_suffix:n { #1 }
+    \eqref{#1}'\l__ekler_suffix_str ki
+  }
+
+\NewDocumentCommand{\eden}{ m }
+  {
+    \__ekler_calculate_suffix:n { #1 }
+    \eqref{#1}'\l__ekler_suffix_str n
+  }
+
+% FIGURE / SECTION İÇİN EKLER (\fde, \fdeki, \fden)
+\NewDocumentCommand{\fde}{ m }
+  {
+    \__ekler_calculate_suffix:n { #1 }
+    \ref{#1}'\l__ekler_suffix_str
+  }
+
+\NewDocumentCommand{\fdeki}{ m }
+  {
+    \__ekler_calculate_suffix:n { #1 }
+    \ref{#1}'\l__ekler_suffix_str ki
+  }
+
+\NewDocumentCommand{\fden}{ m }
+  {
+    \__ekler_calculate_suffix:n { #1 }
+    \ref{#1}'\l__ekler_suffix_str n
+  }
+
+\ExplSyntaxOff
+
+
+
+%%
+%% End of file `ekler.sty'.
